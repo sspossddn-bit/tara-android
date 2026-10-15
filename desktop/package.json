@@ -1,0 +1,1 @@
+{"name":"tara","version":"1.2.0","main":"main.js","description":"TARA - Task & Administrative Response Assistant","dependencies":{"adm-zip":"*","nodemailer":"*","xlsx":"*","mammoth":"*","pdf-parse":"1.1.1","imapflow":"*","mailparser":"*"}}

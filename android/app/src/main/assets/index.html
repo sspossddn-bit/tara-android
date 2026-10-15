@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>TARA</title>
+<style>
+:root{--bg:#070b14;--panel:#0f172a;--line:rgba(148,163,184,.2);--text:#e7eefb;--muted:#8fa1bd;--cyan:#42d9ff;--blue:#5b7cff;--violet:#9b7bff;--green:#38e6a2;--red:#ff5d73}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.orb{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#fff 0 6%,var(--cyan) 7% 22%,#1e62ff 40%,transparent 70%);box-shadow:0 0 18px #42d9ff88;flex:none}
+header b{letter-spacing:.12em;font-size:18px}header small{display:block;color:var(--muted);font-size:11px}
+header .sp{flex:1}header button{background:none;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:6px 10px;font-size:16px}
+#chat{flex:1;overflow-y:auto;padding:12px 14px}
+.b{max-width:92%;margin:0 0 10px;padding:10px 13px;border-radius:15px;border:1px solid var(--line);overflow-wrap:anywhere;white-space:pre-wrap}
+.me{margin-left:auto;background:linear-gradient(135deg,#253eaa,#315ed0);color:#fff;border-color:#5d7eff66}
+.ai{background:var(--panel)}.err{background:rgba(255,93,115,.1);border-color:#ff5d7366}
+.sys{color:var(--muted);font-size:12px;text-align:center;border:0;background:none;margin:4px auto}
+.card{border:1px solid rgba(66,217,255,.5);background:var(--panel);border-radius:15px;padding:12px;margin:0 0 12px}
+.card h4{margin:0 0 4px;font-size:15px}.card .sub{color:var(--muted);font-size:12px;margin-bottom:6px;overflow-wrap:anywhere}
+.card pre{background:#050a14;border:1px solid var(--line);border-radius:10px;padding:8px;max-height:200px;overflow:auto;white-space:pre-wrap;font-size:12px;margin:6px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.yes,.no,.opt,.go{border:0;border-radius:11px;padding:11px 16px;font-weight:700;font-size:15px}
+.yes{background:linear-gradient(135deg,#1fa86f,#38e6a2);color:#04140d}.no{background:transparent;border:1px solid var(--red);color:var(--red)}
+.opt{background:#18253b;color:var(--text);text-align:left;width:100%;font-weight:500}.go{background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff}
+.done{color:var(--muted);font-size:13px;margin-top:6px}
+footer{padding:8px 12px 12px;border-top:1px solid var(--line)}
+#partial{min-height:20px;color:var(--cyan);font-size:13px;padding:0 4px 4px}
+.bar{display:flex;gap:8px;align-items:center}
+.bar input{flex:1;background:#0c1424;border:1px solid var(--line);color:var(--text);border-radius:14px;padding:12px;font-size:15px;outline:0;min-width:0}
+.bar button{border:0;border-radius:50%;width:48px;height:48px;font-size:20px;color:#fff;background:#18253b;flex:none}
+#mic{background:linear-gradient(135deg,var(--blue),var(--violet));width:56px;height:56px}
+#mic.live{background:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(255,93,115,.2)}}
+.panel{position:fixed;inset:0;background:var(--bg);z-index:5;padding:18px;overflow:auto}
+.panel h2{margin-top:0}.panel label{display:block;color:var(--muted);font-size:12px;margin:14px 0 4px}
+.panel input[type=text],.panel input[type=password],.panel select{width:100%;background:#0c1424;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px;font-size:15px}
+.chk{display:flex!important;align-items:center;gap:10px;color:var(--text)!important;font-size:15px!important}
+.hidden{display:none!important}.note{color:var(--muted);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header><div class="orb"></div><div><b>TARA</b><small id="st">Not set up</small></div><div class="sp"></div><button id="full" onclick="location.href='tara-full.html'" title="Open the full TARA">Full TARA</button><button id="gear">⚙</button></header>
+  <div id="chat"></div>
+  <footer>
+    <div id="partial"></div>
+    <div class="bar"><input id="msg" placeholder="Type, or tap the mic and talk…" autocomplete="off"><button id="send">➤</button><button id="mic">🎙</button></div>
+  </footer>
+</div>
+
+<div id="setup" class="panel hidden">
+  <h2>TARA setup</h2>
+  <label>Relay URL (from Render, e.g. https://tara-relay.onrender.com)</label>
+  <input id="fUrl" type="text" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <label>Secret token (same as TARA_TOKEN on the relay)</label>
+  <input id="fTok" type="password" autocomplete="off">
+  <label>Voice language</label>
+  <select id="fLang"><option value="en-IN">English (India)</option><option value="te-IN">తెలుగు (Telugu)</option><option value="hi-IN">हिन्दी (Hindi)</option><option value="en-US">English (US)</option></select>
+  <label class="chk"><input id="fSpeak" type="checkbox"> Speak replies aloud</label>
+  <label class="chk"><input id="fAuto" type="checkbox"> Keep listening after each reply (hands-free)</label>
+  <label class="chk"><input id="fWake" type="checkbox"> Say “Hey TARA” to talk (works while this app is open; keeps the screen on)</label>
+  <div class="row"><button class="go" id="fSave">Save &amp; test</button><button class="no" id="fClose" style="border-color:var(--line);color:var(--muted)">Close</button></div>
+  <div class="note" id="fMsg"></div>
+  <div class="note">Your PC must have TARA open and connected to the same relay (TARA → Settings → Phone link). Voice approvals: say “yes” or “no”. Calls and texts that TARA requests always ask you to confirm here first.</div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
+let cfg={url:store.get("url",""),token:store.get("token",""),lang:store.get("lang","en-IN"),speak:store.get("speak","1")==="1",auto:store.get("auto","0")==="1",wake:store.get("wake","0")==="1"};
+const A=window.Android||null;
+const chat=$("chat");
+let listening=false,pending=null,afterSpeak=null,awaitingFeedback=false,jobRunning=false,micMode="";
+let voiceJob=false,wakeArmed=0,cmdPending=null,cmdLoopOn=false;const cmdOpen={};
+
+function scrollDown(){chat.scrollTop=chat.scrollHeight}
+function add(cls,text){const d=document.createElement("div");d.className="b "+cls;d.textContent=text;chat.appendChild(d);scrollDown();return d}
+function setStatus(t,ok){$("st").textContent=t}
+function clean(t){return String(t||"").replace(/```[\s\S]*?```/g," ").replace(/[*_`#>|]/g,"").replace(/^\s*[-•]\s+/gm,"").replace(/\s+/g," ").trim()}
+const configured=()=>cfg.url&&cfg.token;
+async function api(method,path,body,ms){
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),ms||20000);
+  try{
+    const r=await fetch(cfg.url.replace(/\/+$/,"")+path,{method,signal:ctl.signal,headers:{"x-tara-token":cfg.token,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
+    if(!r.ok){const e=new Error("HTTP "+r.status);e.status=r.status;throw e}
+    return await r.json();
+  }catch(e){if(e.name==="AbortError")throw new Error("timed out (the relay may be waking up)");throw e}
+  finally{clearTimeout(t)}
+}
+
+/* ---------- speech ---------- */
+function speakOut(text,then,force){
+  afterSpeak=then||null;
+  const t=clean(text).slice(0,1200);
+  if((!cfg.speak&&!force)||!t){const f=afterSpeak;afterSpeak=null;if(f)setTimeout(f,50);return}
+  if(A)A.speak(t,cfg.lang);
+  else if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(t);u.lang=cfg.lang;u.onend=()=>onSpeakDone();speechSynthesis.speak(u)}
+  else onSpeakDone();
+}
+function onSpeakDone(){const f=afterSpeak;afterSpeak=null;if(f)f()}
+function startMic(mode){
+  micMode=mode||"";
+  if(A)A.stopSpeaking();
+  if(A){A.listen(cfg.lang);return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){add("err","Voice input isn't available here. Type instead.");return}
+  const r=new SR();r.lang=cfg.lang;r.interimResults=true;
+  r.onstart=()=>onSpeechState("listening");
+  r.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;onSpeechResult(t,e.results[e.results.length-1].isFinal)};
+  r.onerror=()=>onSpeechError("I didn't catch that.");r.onend=()=>{if(listening)onSpeechState("idle")};r.start();
+}
+function onSpeechState(s){
+  listening=(s==="listening"||s==="processing");
+  $("mic").classList.toggle("live",s==="listening");
+  if(s==="listening")$("partial").textContent="🎙 Listening…";else if(s==="processing")$("partial").textContent="…";
+}
+function onSpeechError(msg){
+  listening=false;$("mic").classList.remove("live");$("partial").textContent="";
+  if(/permission/i.test(msg)||/not available/i.test(msg))add("err",msg);
+  else if(pending){$("partial").textContent=msg+" Tap the mic or use the buttons."}
+}
+function onSpeechResult(text,final){
+  if(!final){$("partial").textContent="🎙 "+text;return}
+  listening=false;$("mic").classList.remove("live");$("partial").textContent="";
+  text=String(text||"").trim();if(!text)return onSpeechError("I didn't catch that.");
+  if(cmdPending)return voiceCmd(text);
+  if(pending)return voiceApproval(text);
+  submit(text);
+}
+$("mic").onclick=()=>{if(listening){if(A)A.stopListening();return}startMic("")};
+
+/* ---------- talking to TARA via the relay ---------- */
+async function submit(text){
+  text=String(text||"").trim();if(!text)return;
+  if(!configured()){openSetup();return}
+  if(jobRunning){add("sys","TARA is still working on the previous request.");return}
+  add("me",text);setStatus("Sending…");
+  try{const r=await api("POST","/phone/command",{text},70000);await follow(r.id)}
+  catch(e){voiceJob=false;add("err","Couldn't reach the cloud relay ("+e.message+"). Check the URL/token in ⚙ and your internet.");setStatus("Offline")}
+}
+async function follow(id){
+  jobRunning=true;const working=add("ai","…");let shown="",queuedSince=Date.now(),fails=0;const t0=Date.now();
+  const secs=()=>Math.round((Date.now()-t0)/1000)+"s";
+  try{
+    for(;;){
+      await sleep(1000);
+      let j;
+      try{j=await api("GET","/phone/job/"+id,null,15000);fails=0}
+      catch(e){
+        if(e.status===404){working.remove();add("err","The relay was restarted and lost this request. Please ask again.");setStatus("Ready");return}
+        if(e.status===401){working.remove();add("err","The token was rejected. Check the token in ⚙.");setStatus("Ready");return}
+        fails++;setStatus("Reconnecting… "+secs());if(fails>=90){working.remove();add("err","Lost connection to the relay. Check your internet and try again.");setStatus("Ready");return}continue}
+      if(j.status==="queued"){setStatus(j.pcOnline?"Waiting for TARA…":"PC offline?");if(Date.now()-queuedSince>150000){working.remove();add("err","TARA on your PC didn't pick this up. Make sure TARA is open on the PC and connected (TARA → Settings → Phone link).");setStatus("Ready");return}}
+      else if(j.status==="running")setStatus("TARA is working… "+secs());
+      else if(j.status==="waiting")setStatus("Waiting for your answer…");
+      if(j.approval){const key=JSON.stringify(j.approval);if(key!==shown){shown=key;showApproval(id,j.approval)}}
+      else shown="";
+      if(j.status==="done"||j.status==="error"){
+        working.remove();add(j.status==="done"?"ai":"err",j.reply||"(no reply)");setStatus("Ready");
+        const rep=j.reply||"";
+        speakOut(rep,()=>{if((cfg.auto||voiceJob)&&!pending&&!cmdPending&&cfg.auto)startMic("")},voiceJob);
+        return;
+      }
+    }
+  }finally{jobRunning=false;voiceJob=false}
+}
+
+/* ---------- approvals (buttons or voice) ---------- */
+function showApproval(id,a){
+  const d=document.createElement("div");d.className="card";
+  const pv=a.preview?"<pre></pre>":"";
+  d.innerHTML="<h4></h4><div class='sub'></div>"+pv+"<div class='row'></div>";
+  d.querySelector("h4").textContent=a.title||"Approve?";d.querySelector(".sub").textContent=a.sub||"";
+  if(a.preview)d.querySelector("pre").textContent=a.preview;
+  const row=d.querySelector(".row");
+  pending={id,a,card:d,row};
+  if(a.options&&a.options.length){
+    a.options.concat(["None of these"]).forEach((o,i)=>{const b=document.createElement("button");b.className="opt";b.textContent=(i<a.options.length?(i+1)+". ":"")+o;b.onclick=()=>answer({ok:true,choice:o});row.appendChild(b)});
+  }else{
+    const y=document.createElement("button");y.className="yes";y.textContent="✓ Yes, proceed";y.onclick=()=>answer({ok:true});
+    const n=document.createElement("button");n.className="no";n.textContent="✗ No, change it";n.onclick=()=>askFeedback();
+    row.append(y,n);
+  }
+  chat.appendChild(d);scrollDown();
+  const say=(a.title||"Approve?")+". "+(a.sub?clean(a.sub)+". ":"")+(a.options&&a.options.length?"Say the number of your choice.":"Say yes to proceed, or no to change it.");
+  speakOut(say,()=>{if(pending)startMic("approval")},voiceJob||cfg.wake);
+}
+function askFeedback(){
+  if(!pending)return;
+  awaitingFeedback=true;pending.row.style.display="none";
+  const f=document.createElement("div");f.className="row";
+  f.innerHTML="<input type='text' id='fb' placeholder='What should I change?' style='flex:1;min-width:200px;background:#0c1424;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px'><button class='go'>Send</button>";
+  pending.card.appendChild(f);pending.fb=f;
+  const go=()=>answer({ok:false,feedback:f.querySelector("input").value.trim()});
+  f.querySelector("button").onclick=go;f.querySelector("input").addEventListener("keydown",e=>{if(e.key==="Enter")go()});
+  speakOut("What should I change?",()=>{if(pending&&awaitingFeedback)startMic("feedback")});
+}
+async function answer(d){
+  const p=pending;if(!p)return;pending=null;awaitingFeedback=false;
+  if(A)A.stopSpeaking();
+  p.row.remove();if(p.fb)p.fb.remove();
+  const t=document.createElement("div");t.className="done";
+  t.textContent=d.choice?("Selected: "+d.choice):(d.ok?"✓ Approved":"✗ Not approved"+(d.feedback?" — "+d.feedback:""));p.card.appendChild(t);
+  try{await api("POST","/phone/approve",{id:p.id,ok:d.ok,feedback:d.feedback||"",choice:d.choice||""})}catch(e){add("err","Couldn't send your answer: "+e.message)}
+}
+function voiceApproval(text){
+  const l=text.toLowerCase().trim();
+  if(awaitingFeedback){answer({ok:false,feedback:text});return}
+  if(pending.a.options&&pending.a.options.length){
+    const opts=pending.a.options,words={one:1,first:1,two:2,second:2,three:3,third:3,four:4,fourth:4,five:5,six:6};
+    let n=parseInt((l.match(/\d+/)||[])[0]);if(!n){for(const w in words)if(new RegExp("\\b"+w+"\\b").test(l)){n=words[w];break}}
+    if(/\b(none|neither|no)\b/.test(l)){answer({ok:true,choice:"None of these"});return}
+    if(n&&n<=opts.length){answer({ok:true,choice:opts[n-1]});return}
+    const hit=opts.find(o=>l.length>2&&o.toLowerCase().includes(l));if(hit){answer({ok:true,choice:hit});return}
+    speakOut("Please say the number of your choice.",()=>{if(pending)startMic("approval")});return;
+  }
+  if(/\b(yes|yeah|yep|yup|ok|okay|proceed|go ahead|approve|approved|confirm|sure|do it|haan|han|avunu|sare|ayindi)\b/.test(l)){answer({ok:true});return}
+  if(/\b(no|nope|cancel|don't|dont|stop|change|nahi|nahin|kaadu|vaddu)\b/.test(l)){askFeedback();return}
+  speakOut("Please say yes or no.",()=>{if(pending)startMic("approval")});
+}
+
+/* ---------- "Hey TARA" wake word (native listener runs while the app is open) ---------- */
+function applyWake(){if(A&&A.setWake)A.setWake(!!cfg.wake,cfg.lang)}
+function onWakeState(on,msg){if(!on){cfg.wake=false;store.set("wake","0");if(msg)add("err",msg)}}
+function onWakeResult(text){
+  text=String(text||"").trim();if(!text)return;
+  if(cmdPending)return voiceCmd(text);
+  if(pending)return voiceApproval(text);
+  const m=text.match(/^\W*(?:(?:hey|hi|ok|okay)\s+)?(?:tara|tarah|tera|tarra)\b[\s,.!?:-]*(.*)$/i);
+  let cmd=null;
+  if(m){cmd=m[1].trim();if(!cmd){wakeArmed=Date.now()+10000;speakOut("Yes?",null,true);return}}
+  else if(Date.now()<wakeArmed)cmd=text;
+  if(!cmd||jobRunning)return;
+  wakeArmed=0;voiceJob=true;submit(cmd);
+}
+
+/* ---------- phone actions requested by TARA on the PC (call / text) — always confirmed here ---------- */
+async function cmdLoop(){
+  if(cmdLoopOn)return;cmdLoopOn=true;
+  while(configured()){
+    try{
+      while(cmdPending)await sleep(500);
+      const r=await api("GET","/phone/cmds",null,40000);
+      if(r.cmd)showCmd(r.cmd);
+    }catch(e){if(e.status===401)break;await sleep(4000)}
+  }
+  cmdLoopOn=false;
+}
+function showCmd(c){
+  const isSms=c.kind==="sms",who=c.name||c.to;
+  const d=document.createElement("div");d.className="card";
+  d.innerHTML="<h4></h4><div class='sub'></div>"+(isSms?"<pre></pre>":"")+"<div class='row'></div>";
+  d.querySelector("h4").textContent=isSms?"Send this text from your phone?":"Place this call from your phone?";
+  d.querySelector(".sub").textContent="To: "+who+" ("+c.to+")";
+  if(isSms)d.querySelector("pre").textContent=c.text||"";
+  const row=d.querySelector(".row");
+  const y=document.createElement("button");y.className="yes";y.textContent=isSms?"✓ Send":"✓ Call";y.onclick=()=>answerCmd(true);
+  const n=document.createElement("button");n.className="no";n.textContent="✗ Cancel";n.onclick=()=>answerCmd(false);
+  row.append(y,n);cmdPending={c,card:d,row};chat.appendChild(d);scrollDown();
+  const say="TARA wants to "+(isSms?"send a text to ":"call ")+who+". "+(isSms?"The message says: "+clean(c.text||"").slice(0,300)+". ":"")+"Say yes to go ahead, or no to cancel.";
+  speakOut(say,()=>{if(cmdPending&&(cfg.speak||cfg.wake))startMic("cmd")},cfg.wake);
+}
+function answerCmd(ok){
+  const p=cmdPending;if(!p)return;cmdPending=null;if(A)A.stopSpeaking();
+  p.row.remove();const t=document.createElement("div");t.className="done";p.card.appendChild(t);
+  const c=p.c;
+  if(!ok){t.textContent="✗ Cancelled";reportCmd(c.id,false,"The user cancelled on the phone.");return}
+  t.textContent="Working…";cmdOpen[c.id]=t;
+  if(A){if(c.kind==="sms")A.sendSms(c.id,c.to,c.text||"");else A.placeCall(c.id,c.to)}
+  else{location.href=(c.kind==="sms"?"sms:"+c.to+"?body="+encodeURIComponent(c.text||""):"tel:"+c.to);onCmdResult(c.id,true,"Opened the "+(c.kind==="sms"?"message composer":"dialer")+" on the phone; press send/call there.")}
+}
+function onCmdResult(id,ok,msg){const t=cmdOpen[id];if(t){t.textContent=(ok?"✓ ":"✗ ")+msg;delete cmdOpen[id]}reportCmd(id,ok,msg)}
+async function reportCmd(id,ok,msg){try{await api("POST","/phone/cmd-result",{id,ok,msg})}catch(e){add("err","Couldn't report back to TARA: "+e.message)}}
+function voiceCmd(text){
+  const l=text.toLowerCase().trim();
+  if(/\b(yes|yeah|yep|ok|okay|go ahead|send it|call|confirm|sure|do it|haan|han|avunu|sare|ayindi)\b/.test(l)){answerCmd(true);return}
+  if(/\b(no|nope|cancel|don't|dont|stop|nahi|nahin|kaadu|vaddu)\b/.test(l)){answerCmd(false);return}
+  speakOut("Please say yes or no.",()=>{if(cmdPending)startMic("cmd")},true);
+}
+
+/* ---------- UI wiring ---------- */
+$("send").onclick=()=>{const t=$("msg").value;$("msg").value="";submit(t)};
+$("msg").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("send").click()}});
+function openSetup(){$("fUrl").value=cfg.url;$("fTok").value=cfg.token;$("fLang").value=cfg.lang;$("fSpeak").checked=cfg.speak;$("fAuto").checked=cfg.auto;$("fWake").checked=cfg.wake;$("fMsg").textContent="";$("setup").classList.remove("hidden")}
+$("gear").onclick=openSetup;$("fClose").onclick=()=>$("setup").classList.add("hidden");
+$("fSave").onclick=async()=>{
+  cfg.url=$("fUrl").value.trim();cfg.token=$("fTok").value.trim();cfg.lang=$("fLang").value;cfg.speak=$("fSpeak").checked;cfg.auto=$("fAuto").checked;cfg.wake=$("fWake").checked;
+  store.set("url",cfg.url);store.set("token",cfg.token);store.set("lang",cfg.lang);store.set("speak",cfg.speak?"1":"0");store.set("auto",cfg.auto?"1":"0");store.set("wake",cfg.wake?"1":"0");applyWake();cmdLoop();
+  $("fMsg").textContent="Testing…";
+  try{const r=await api("GET","/phone/ping");$("fMsg").textContent=r.pcOnline?"✓ Connected. TARA on your PC is online.":"✓ Relay reachable, but TARA on your PC is not connected yet.";setStatus(r.pcOnline?"PC online":"PC offline");setTimeout(()=>$("setup").classList.add("hidden"),900)}
+  catch(e){$("fMsg").textContent="✗ "+e.message+" — check the URL and token."}
+};
+(async function boot(){
+  add("sys","Tap 🎙 and talk, or type. TARA runs on your PC; this is your remote.");
+  if(!configured()){setStatus("Not set up");openSetup();return}
+  try{const r=await api("GET","/phone/ping");setStatus(r.pcOnline?"PC online":"PC offline — open TARA on the PC")}catch{setStatus("Offline")}
+  applyWake();cmdLoop();
+})();
+</script>
+</body>
+</html>
