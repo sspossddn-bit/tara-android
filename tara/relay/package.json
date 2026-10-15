@@ -1,0 +1,8 @@
+{
+  "name": "tara-relay",
+  "version": "1.0.0",
+  "description": "Cloud relay between the TARA phone app and TARA on the PC",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}
